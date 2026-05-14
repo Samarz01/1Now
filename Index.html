@@ -1,0 +1,989 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1Now AI — Rental Lockout Resolution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #fafaf7;
+    --orange: #FF4D00;
+    --orange-light: #fff0eb;
+    --green: #00C26F;
+    --green-light: #e6fff3;
+    --yellow: #FFB800;
+    --yellow-light: #fffbe6;
+    --gray-100: #f5f5f0;
+    --gray-200: #e8e8e0;
+    --gray-400: #a8a89e;
+    --gray-600: #6b6b65;
+    --gray-800: #2a2a28;
+    --radius: 4px;
+    --radius-lg: 8px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1.5px solid var(--black);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--orange); border-radius: 50%; }
+  .header-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+  .status-live {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+  }
+  .pulse {
+    width: 7px; height: 7px; background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+  /* MAIN LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1.5px solid var(--black);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .sidebar-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-600);
+  }
+
+  /* TICKET CARD */
+  .ticket-card {
+    border: 1.5px solid var(--black);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .ticket-card:hover { transform: translateY(-1px); box-shadow: 3px 3px 0 var(--black); }
+  .ticket-card.active { box-shadow: 4px 4px 0 var(--orange); border-color: var(--orange); }
+  .ticket-header {
+    background: var(--black);
+    color: var(--white);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ticket-id { font-family: var(--mono); font-size: 11px; }
+  .ticket-time { font-family: var(--mono); font-size: 10px; color: var(--gray-400); }
+  .ticket-body { padding: 12px; }
+  .ticket-renter { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+  .ticket-issue { font-size: 12px; color: var(--gray-600); margin-bottom: 10px; }
+  .ticket-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .badge-red { background: #ffe8e8; color: #c0392b; }
+  .badge-yellow { background: var(--yellow-light); color: #856c00; }
+  .badge-green { background: var(--green-light); color: #0a7a44; }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+
+  /* MAIN PANEL */
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CASE BAR */
+  .case-bar {
+    border-bottom: 1.5px solid var(--black);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .case-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+  .case-sub { font-size: 13px; color: var(--gray-600); margin-top: 2px; }
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--black);
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.1s;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .btn:hover { background: var(--black); color: var(--white); }
+  .btn-primary { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .btn-primary:hover { background: #cc3d00; border-color: #cc3d00; }
+  .btn-green { background: var(--green); border-color: var(--green); color: var(--white); }
+  .btn-green:hover { background: #009a56; border-color: #009a56; }
+
+  /* CASE BODY */
+  .case-body {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    flex: 1;
+  }
+
+  /* FLOW PANEL */
+  .flow-panel {
+    padding: 2rem;
+    border-right: 1.5px solid var(--black);
+    overflow-y: auto;
+  }
+
+  /* TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+    padding-bottom: 1.5rem;
+    position: relative;
+  }
+  .step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 15px; top: 32px; bottom: 0;
+    width: 1.5px;
+    background: var(--gray-200);
+  }
+  .step.active::before { background: var(--orange); }
+  .step-node {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gray-200);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-400);
+    background: var(--white);
+    flex-shrink: 0;
+    z-index: 1;
+    transition: all 0.2s;
+  }
+  .step.done .step-node { background: var(--green); border-color: var(--green); color: var(--white); }
+  .step.active .step-node { background: var(--orange); border-color: var(--orange); color: var(--white); font-size: 9px; }
+  .step.skipped .step-node { background: var(--gray-200); border-color: var(--gray-200); color: var(--gray-400); }
+  .step-content { min-width: 0; }
+  .step-label {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .step.done .step-label { color: var(--gray-600); }
+  .step-desc { font-size: 13px; color: var(--gray-600); line-height: 1.5; }
+
+  /* STEP CARD */
+  .step-card {
+    border: 1.5px solid var(--black);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .step-card-header {
+    background: var(--gray-100);
+    padding: 8px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+    letter-spacing: 0.04em;
+  }
+  .step-card-body { padding: 12px; }
+
+  /* FORM ELEMENTS */
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gray-600);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    background: var(--white);
+    color: var(--black);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--orange);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  .radio-group { display: flex; flex-direction: column; gap: 6px; }
+  .radio-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    transition: border-color 0.1s, background 0.1s;
+  }
+  .radio-opt:hover { border-color: var(--orange); background: var(--orange-light); }
+  .radio-opt.selected { border-color: var(--orange); background: var(--orange-light); font-weight: 500; }
+  .radio-opt input { display: none; }
+
+  .ai-box {
+    background: var(--gray-100);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--gray-800);
+    font-style: italic;
+    position: relative;
+  }
+  .ai-box::before {
+    content: 'AI DRAFT';
+    font-family: var(--mono);
+    font-size: 9px;
+    font-style: normal;
+    color: var(--gray-400);
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .panel-section {}
+  .panel-section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .panel-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+  }
+
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--gray-600); }
+  .info-val { font-weight: 500; font-family: var(--mono); font-size: 12px; }
+
+  .log-entry {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { font-family: var(--mono); color: var(--gray-400); flex-shrink: 0; font-size: 11px; }
+  .log-msg { color: var(--gray-800); }
+
+  /* RESOLVED STATE */
+  .resolved-banner {
+    display: none;
+    background: var(--green);
+    color: var(--white);
+    padding: 1rem 2rem;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .resolved-banner.show { display: flex; }
+  .resolved-check {
+    width: 36px; height: 36px;
+    border: 2.5px solid rgba(255,255,255,0.6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .resolved-sub { font-size: 13px; font-weight: 400; font-family: var(--sans); opacity: 0.85; }
+
+  /* ESCALATION WARNING */
+  .warn-box {
+    background: var(--yellow-light);
+    border: 1.5px solid var(--yellow);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #6b5000;
+    margin-top: 10px;
+  }
+  .warn-box strong { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; margin-bottom: 3px; }
+
+  /* SLA TIMER */
+  .sla-bar {
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    height: 4px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .sla-fill {
+    height: 100%;
+    border-radius: var(--radius);
+    background: var(--orange);
+    transition: width 1s linear;
+  }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 1.5px solid var(--black); }
+  .tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--gray-600);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1.5px;
+    transition: color 0.1s, border-color 0.1s;
+  }
+  .tab.active { color: var(--black); border-bottom-color: var(--orange); font-weight: 500; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SUMMARY METRICS */
+  .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .metric-card {
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    text-align: center;
+  }
+  .metric-val { font-family: var(--display); font-weight: 700; font-size: 24px; }
+  .metric-label { font-family: var(--mono); font-size: 10px; color: var(--gray-400); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+  .metric-card.ok .metric-val { color: var(--green); }
+  .metric-card.warn .metric-val { color: var(--orange); }
+  .metric-card.neutral .metric-val { color: var(--black); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1.5px solid var(--black); }
+    .case-body { grid-template-columns: 1fr; }
+    .flow-panel { border-right: none; border-bottom: 1.5px solid var(--black); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    1Now AI
+    <span class="header-tag">SUPPORT OPS</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <div class="status-live">
+      <div class="pulse"></div>
+      LIVE
+    </div>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--gray-400);" id="clock"></span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR: ticket queue -->
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-title" style="margin-bottom:10px;">Active Incidents</div>
+      <div class="metrics-row" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;">
+        <div class="metric-card warn">
+          <div class="metric-val">3</div>
+          <div class="metric-label">Open</div>
+        </div>
+        <div class="metric-card ok">
+          <div class="metric-val">12</div>
+          <div class="metric-label">Resolved today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-title">Queue</div>
+
+    <div class="ticket-card active" onclick="loadTicket('T-0041')">
+      <div class="ticket-header">
+        <span class="ticket-id">T-0041</span>
+        <span class="ticket-time" style="color:#ff8c6b;">11:47 PM · CRITICAL</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-renter">Ahmed K.</div>
+        <div class="ticket-issue">Locked out of vehicle mid-rental — LAX parking structure</div>
+        <div class="ticket-meta">
+          <span class="badge badge-red">LOCKOUT</span>
+          <span class="badge badge-yellow">SLA: 8min</span>
+          <span class="badge badge-gray">Toyota Camry</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-card" onclick="loadTicket('T-0039')">
+      <div class="ticket-header">
+        <span class="ticket-id">T-0039</span>
+        <span class="ticket-time">10:22 PM</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-renter">Farida S.</div>
+        <div class="ticket-issue">App not opening trunk — rental starts in 20 min</div>
+        <div class="ticket-meta">
+          <span class="badge badge-yellow">ACCESS</span>
+          <span class="badge badge-gray">Tesla Model 3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-card" onclick="loadTicket('T-0036')">
+      <div class="ticket-header">
+        <span class="ticket-id">T-0036</span>
+        <span class="ticket-time">09:05 PM</span>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-renter">Hamza M.</div>
+        <div class="ticket-issue">Damage claim dispute — wants refund</div>
+        <div class="ticket-meta">
+          <span class="badge badge-red">DISPUTE</span>
+          <span class="badge badge-gray">Honda CR-V</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <main class="main">
+    <div class="resolved-banner" id="resolvedBanner">
+      <div class="resolved-check">✓</div>
+      <div>
+        Case T-0041 resolved
+        <div class="resolved-sub">Total time: 6m 24s · Renter notified · Operator log updated</div>
+      </div>
+    </div>
+
+    <div class="case-bar">
+      <div>
+        <div class="case-title">Lockout Resolution — T-0041</div>
+        <div class="case-sub">Ahmed K. · Toyota Camry #CAM-07 · LAX Terminal 5 Parking · Started 11:47 PM</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" onclick="escalate()">Escalate</button>
+        <button class="btn btn-green" onclick="resolveCase()">Mark Resolved</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('flow', this)">Resolution Flow</button>
+      <button class="tab" onclick="switchTab('comm', this)">Communications</button>
+      <button class="tab" onclick="switchTab('history', this)">Rental History</button>
+    </div>
+
+    <div class="case-body">
+
+      <!-- FLOW: main timeline -->
+      <div class="flow-panel">
+
+        <div id="tab-flow" class="tab-panel active">
+          <div class="timeline" id="timeline">
+
+            <!-- STEP 1 -->
+            <div class="step done" id="step1">
+              <div class="step-node">✓</div>
+              <div class="step-content">
+                <div class="step-label">Identity Verified</div>
+                <div class="step-desc">Renter confirmed via booking ID + last 4 of phone. Booking active. No fraud flags.</div>
+              </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step active" id="step2">
+              <div class="step-node">NOW</div>
+              <div class="step-content">
+                <div class="step-label">Diagnose Lock Issue</div>
+                <div class="step-desc">Identify root cause before choosing resolution path.</div>
+                <div class="step-card">
+                  <div class="step-card-header">WHAT IS THE LOCKOUT CAUSE?</div>
+                  <div class="step-card-body">
+                    <div class="radio-group" id="causeGroup">
+                      <label class="radio-opt" onclick="selectCause(this,'keys-inside')">
+                        <input type="radio" name="cause" value="keys-inside">
+                        Keys left inside locked vehicle
+                      </label>
+                      <label class="radio-opt" onclick="selectCause(this,'app-fail')">
+                        <input type="radio" name="cause" value="app-fail">
+                        App unlock not working (smart lock vehicle)
+                      </label>
+                      <label class="radio-opt" onclick="selectCause(this,'key-lost')">
+                        <input type="radio" name="cause" value="key-lost">
+                        Key lost or not found at handoff
+                      </label>
+                      <label class="radio-opt" onclick="selectCause(this,'battery')">
+                        <input type="radio" name="cause" value="battery">
+                        Key fob battery dead
+                      </label>
+                    </div>
+                    <div class="action-row">
+                      <button class="btn btn-primary" onclick="advanceStep2()">Confirm Cause →</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step" id="step3">
+              <div class="step-node">3</div>
+              <div class="step-content">
+                <div class="step-label">Choose Resolution Path</div>
+                <div class="step-desc">Dispatch action based on cause.</div>
+              </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="step" id="step4">
+              <div class="step-node">4</div>
+              <div class="step-content">
+                <div class="step-label">Contact Renter</div>
+                <div class="step-desc">Send ETA and instructions. Keep renter in loop.</div>
+              </div>
+            </div>
+
+            <!-- STEP 5 -->
+            <div class="step" id="step5">
+              <div class="step-node">5</div>
+              <div class="step-content">
+                <div class="step-label">Confirm Access Restored</div>
+                <div class="step-desc">Close loop. Document incident. Notify operator.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- COMMUNICATIONS TAB -->
+        <div id="tab-comm" class="tab-panel">
+          <div style="margin-bottom:1.5rem;">
+            <div class="sidebar-title" style="margin-bottom:12px;">Message to Renter</div>
+            <div class="ai-box" id="renterMsgBox">
+              Hi Ahmed, this is 1Now support. I can see you're locked out of your Toyota Camry at LAX — I'm on it right now. A locksmith is being dispatched to Terminal 5 Parking and should reach you within 20–30 minutes. Stay with the vehicle. I'll send you a confirmation text once they're en route. Sorry for the hassle.
+            </div>
+            <div class="action-row">
+              <button class="btn btn-primary" onclick="sendMsg('renter')">Send via SMS</button>
+              <button class="btn" onclick="copyMsg()">Copy</button>
+            </div>
+          </div>
+          <div>
+            <div class="sidebar-title" style="margin-bottom:12px;">Message to Operator</div>
+            <div class="ai-box">
+              🚨 Lockout — CAM-07. Renter: Ahmed K., LAX T5 Parking. Cause: keys inside. Locksmith dispatched. ETA 25min. No damage reported. Will update when resolved.
+            </div>
+            <div class="action-row">
+              <button class="btn" onclick="sendMsg('operator')">Send to Operator</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="tab-history" class="tab-panel">
+          <div class="sidebar-title" style="margin-bottom:12px;">Renter History — Ahmed K.</div>
+          <div class="metrics-row">
+            <div class="metric-card ok">
+              <div class="metric-val">8</div>
+              <div class="metric-label">Rentals</div>
+            </div>
+            <div class="metric-card ok">
+              <div class="metric-val">4.9</div>
+              <div class="metric-label">Avg Rating</div>
+            </div>
+            <div class="metric-card neutral">
+              <div class="metric-val">0</div>
+              <div class="metric-label">Prior Incidents</div>
+            </div>
+          </div>
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1.5px solid var(--black);">
+                <th style="text-align:left;padding:6px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;font-weight:500;color:var(--gray-600);">DATE</th>
+                <th style="text-align:left;padding:6px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;font-weight:500;color:var(--gray-600);">VEHICLE</th>
+                <th style="text-align:left;padding:6px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;font-weight:500;color:var(--gray-600);">DAYS</th>
+                <th style="text-align:left;padding:6px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;font-weight:500;color:var(--gray-600);">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--gray-100);">
+                <td style="padding:6px 4px;">May 14, 2026</td>
+                <td style="padding:6px 4px;">Toyota Camry</td>
+                <td style="padding:6px 4px;">3</td>
+                <td style="padding:6px 4px;"><span class="badge badge-red">ACTIVE · INCIDENT</span></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gray-100);">
+                <td style="padding:6px 4px;">Apr 22, 2026</td>
+                <td style="padding:6px 4px;">Honda Civic</td>
+                <td style="padding:6px 4px;">2</td>
+                <td style="padding:6px 4px;"><span class="badge badge-green">Completed · ⭐ 5.0</span></td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--gray-100);">
+                <td style="padding:6px 4px;">Mar 10, 2026</td>
+                <td style="padding:6px 4px;">Tesla Model 3</td>
+                <td style="padding:6px 4px;">5</td>
+                <td style="padding:6px 4px;"><span class="badge badge-green">Completed · ⭐ 4.8</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <aside class="right-panel">
+
+        <div class="panel-section">
+          <div class="panel-section-title">SLA Timer</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:500;color:var(--orange);" id="slaDisplay">08:00</span>
+            <span style="font-size:11px;color:var(--gray-400);font-family:var(--mono);">TARGET: 15 MIN</span>
+          </div>
+          <div class="sla-bar">
+            <div class="sla-fill" id="slaFill" style="width:53%;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:4px;font-family:var(--mono);">ELAPSED TIME</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Rental Details</div>
+          <div class="info-row"><span class="info-key">Vehicle</span><span class="info-val">Camry #CAM-07</span></div>
+          <div class="info-row"><span class="info-key">Location</span><span class="info-val">LAX T5 P2</span></div>
+          <div class="info-row"><span class="info-key">Rental start</span><span class="info-val">May 14 9:00 AM</span></div>
+          <div class="info-row"><span class="info-key">Rental end</span><span class="info-val">May 17 9:00 AM</span></div>
+          <div class="info-row"><span class="info-key">Daily rate</span><span class="info-val">$89/day</span></div>
+          <div class="info-row"><span class="info-key">Deposit</span><span class="info-val">$300 held</span></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Renter</div>
+          <div class="info-row"><span class="info-key">Name</span><span class="info-val">Ahmed Karimov</span></div>
+          <div class="info-row"><span class="info-key">Phone</span><span class="info-val">···· 4821</span></div>
+          <div class="info-row"><span class="info-key">Rating</span><span class="info-val">⭐ 4.9 (8 trips)</span></div>
+          <div class="info-row"><span class="info-key">Incidents</span><span class="info-val" style="color:var(--green);">None</span></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Incident Log</div>
+          <div id="incidentLog">
+            <div class="log-entry">
+              <span class="log-time">11:47</span>
+              <span class="log-msg">Ticket opened — renter initiated lockout report</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">11:48</span>
+              <span class="log-msg">Identity verified via booking ID + phone</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">11:48</span>
+              <span class="log-msg">Case assigned to support agent</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button class="btn" style="text-align:left;width:100%;" onclick="addLog('Roadside assistance dispatched')">🔧 Dispatch Roadside</button>
+            <button class="btn" style="text-align:left;width:100%;" onclick="addLog('Locksmith dispatched via NationWide Locksmith')">🔑 Dispatch Locksmith</button>
+            <button class="btn" style="text-align:left;width:100%;" onclick="addLog('Operator notified of incident')">📲 Notify Operator</button>
+            <button class="btn" style="text-align:left;width:100%;" onclick="addLog('Partial refund issued: $20 inconvenience credit')">💸 Issue Credit</button>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // SLA Timer — counts up
+  let elapsed = 480; // 8 min elapsed
+  let slaInterval = setInterval(() => {
+    elapsed++;
+    const m = Math.floor(elapsed/60).toString().padStart(2,'0');
+    const s = (elapsed%60).toString().padStart(2,'0');
+    document.getElementById('slaDisplay').textContent = m+':'+s;
+    const pct = Math.min((elapsed / 900) * 100, 100);
+    document.getElementById('slaFill').style.width = pct+'%';
+    if(pct > 80) document.getElementById('slaFill').style.background = '#c0392b';
+    else if(pct > 60) document.getElementById('slaFill').style.background = '#FFB800';
+  }, 1000);
+
+  // Tab switching
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  // Cause selection
+  let selectedCause = null;
+  function selectCause(el, val) {
+    document.querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCause = val;
+  }
+
+  // Step 2 advance
+  function advanceStep2() {
+    if(!selectedCause) { alert('Please select a cause first.'); return; }
+
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+
+    step2.classList.remove('active');
+    step2.classList.add('done');
+    step2.querySelector('.step-node').textContent = '✓';
+
+    step3.classList.add('active');
+    step3.querySelector('.step-node').textContent = 'NOW';
+
+    const resMap = {
+      'keys-inside': { action: 'Dispatch locksmith via NationWide Locksmith partner (ETA 20–30 min)', note: 'Locksmith can unlock without damaging vehicle. Standard cost: $65 — waived for renter, operator billed.' },
+      'app-fail': { action: 'Remote unlock via fleet telematics portal (if connected) OR send override PIN', note: 'Check telematics connectivity first. If offline, dispatch key runner from nearest 1Now partner.' },
+      'key-lost': { action: 'Dispatch spare key from operator or nearest key runner', note: 'If no spare available, locksmith + rekey required. Flag operator for key box setup post-incident.' },
+      'battery': { action: 'Guide renter to use physical key override or dispatch key fob with fresh battery', note: 'Most fobs have a physical key inside. Walk renter through it first — free and instant.' }
+    };
+
+    const r = resMap[selectedCause];
+
+    step3.querySelector('.step-content').innerHTML = `
+      <div class="step-label">Resolution Path Selected</div>
+      <div class="step-desc">${r.action}</div>
+      <div class="step-card">
+        <div class="step-card-header">ACTION REQUIRED</div>
+        <div class="step-card-body">
+          <div class="warn-box"><strong>AGENT NOTE</strong>${r.note}</div>
+          <div class="action-row">
+            <button class="btn btn-primary" onclick="advanceStep3()">Action Taken →</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    addLog('Cause identified: ' + selectedCause.replace('-',' '));
+    addLog('Resolution path: ' + r.action.slice(0,50)+'...');
+  }
+
+  function advanceStep3() {
+    const step3 = document.getElementById('step3');
+    const step4 = document.getElementById('step4');
+    step3.classList.remove('active');
+    step3.classList.add('done');
+    step3.querySelector('.step-node').textContent = '✓';
+    step4.classList.add('active');
+    step4.querySelector('.step-node').textContent = 'NOW';
+    step4.querySelector('.step-content').innerHTML = `
+      <div class="step-label">Contact Renter</div>
+      <div class="step-desc">Renter notified — ETA communicated, next steps clear.</div>
+      <div class="step-card">
+        <div class="step-card-header">RENTER UPDATE SENT</div>
+        <div class="step-card-body">
+          <div class="ai-box">Hi Ahmed, locksmith is confirmed and en route to LAX Terminal 5 Parking — ETA approximately 25 minutes. Stay with the vehicle. You'll get a text when they're 5 minutes away. Really sorry for this. — 1Now Support</div>
+          <div class="action-row">
+            <button class="btn btn-primary" onclick="advanceStep4()">Confirm Sent →</button>
+          </div>
+        </div>
+      </div>
+    `;
+    addLog('Renter notified via SMS with ETA');
+  }
+
+  function advanceStep4() {
+    const step4 = document.getElementById('step4');
+    const step5 = document.getElementById('step5');
+    step4.classList.remove('active');
+    step4.classList.add('done');
+    step4.querySelector('.step-node').textContent = '✓';
+    step5.classList.add('active');
+    step5.querySelector('.step-node').textContent = 'NOW';
+    step5.querySelector('.step-content').innerHTML = `
+      <div class="step-label">Confirm Access Restored</div>
+      <div class="step-desc">Close the loop. Document everything for the operator.</div>
+      <div class="step-card">
+        <div class="step-card-header">RESOLUTION CONFIRMATION</div>
+        <div class="step-card-body">
+          <div class="field">
+            <label>Confirmed by renter?</label>
+            <select>
+              <option>Yes — renter confirmed vehicle access</option>
+              <option>No — still unresolved</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Resolution notes</label>
+            <textarea placeholder="e.g. Locksmith arrived at 12:14 AM. Keys retrieved from driver seat. No damage."></textarea>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-green" onclick="resolveCase()">Close Case →</button>
+          </div>
+        </div>
+      </div>
+    `;
+    addLog('Awaiting renter access confirmation');
+  }
+
+  function resolveCase() {
+    clearInterval(slaInterval);
+    document.getElementById('step5').classList.remove('active');
+    document.getElementById('step5').classList.add('done');
+    document.getElementById('step5').querySelector('.step-node').textContent = '✓';
+    document.getElementById('resolvedBanner').classList.add('show');
+    addLog('Case closed — access restored ✓');
+    addLog('Operator incident report filed');
+    addLog('Inconvenience credit issued to renter');
+  }
+
+  function escalate() {
+    addLog('⚠ Escalated to senior support — 30min+ unresolved');
+  }
+
+  // Log
+  function addLog(msg) {
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const log = document.getElementById('incidentLog');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `<span class="log-time">${t}</span><span class="log-msg">${msg}</span>`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function loadTicket(id) {
+    document.querySelectorAll('.ticket-card').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  function sendMsg(to) {
+    addLog('Message sent to ' + to + ' via SMS');
+    alert('Message sent to ' + to + ' ✓');
+  }
+
+  function copyMsg() {
+    const txt = document.getElementById('renterMsgBox').textContent.replace('AI DRAFT','').trim();
+    navigator.clipboard.writeText(txt).then(()=>alert('Copied!'));
+  }
+</script>
+</body>
+</html>

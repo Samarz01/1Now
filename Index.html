@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1Now Ops — Fleet Support Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f5;
+  --surface:#ffffff;
+  --border:#e3e3de;
+  --border-strong:#c5c5bc;
+  --text:#111110;
+  --text-2:#65655e;
+  --text-3:#a3a39a;
+  --accent:#e84b1a;
+  --accent-bg:#fff3ef;
+  --accent-border:#fdb89e;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --green-border:#bbf7d0;
+  --amber:#a16207;
+  --amber-bg:#fefce8;
+  --amber-border:#fde68a;
+  --blue:#1d4ed8;
+  --blue-bg:#eff6ff;
+  --blue-border:#bfdbfe;
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --red-border:#fecaca;
+  --radius:8px;
+  --radius-lg:12px;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+
+nav{background:var(--surface);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 24px;gap:2px;position:sticky;top:0;z-index:200}
+.nav-brand{font-weight:600;font-size:15px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;margin-right:28px;color:var(--text)}
+.nav-dot{width:8px;height:8px;background:var(--accent);border-radius:50%}
+.nav-link{padding:6px 13px;color:var(--text-2);font-size:13px;cursor:pointer;border-radius:6px;border:none;background:transparent;font-family:var(--sans);font-weight:400;transition:all .15s}
+.nav-link:hover{color:var(--text);background:var(--bg)}
+.nav-link.active{color:var(--text);background:var(--bg);font-weight:500}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;border:1px solid var(--green-border)}
+.blink{width:6px;height:6px;border-radius:50%;background:var(--green);animation:bl 2s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.25}}
+
+.page{display:none}
+.page.active{display:block}
+
+.wrap{max-width:1160px;margin:0 auto;padding:24px}
+.ph{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between}
+.pt{font-size:21px;font-weight:600;letter-spacing:-.4px;margin-bottom:3px}
+.ps{color:var(--text-2);font-size:13px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.sl{font-size:11px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.sv{font-size:25px;font-weight:600;letter-spacing:-.5px;line-height:1}
+.ss{font-size:12px;color:var(--text-2);margin-top:3px}
+.sc.red .sv{color:var(--red)}
+.sc.green .sv{color:var(--green)}
+.sc.amber .sv{color:var(--amber)}
+.sc.blue .sv{color:var(--blue)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:18px}
+.card-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-weight:600;font-size:13px}
+
+.th{display:grid;align-items:center;padding:8px 18px;border-bottom:1px solid var(--border);gap:10px}
+.th.tickets-grid{grid-template-columns:72px 1fr 130px 100px 110px 88px}
+.thl{font-size:11px;font-weight:500;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+
+.tr{display:grid;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;gap:10px}
+.tr:last-child{border-bottom:none}
+.tr:hover{background:#fafaf8}
+.tr.tickets-grid{grid-template-columns:72px 1fr 130px 100px 110px 88px}
+.tr.hi{background:#fff5f2;border-left:3px solid var(--accent)}
+.tid{font-family:var(--mono);font-size:11px;color:var(--text-2)}
+.trenter{font-weight:500;font-size:13px}
+.tissue{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tveh{font-size:12px;color:var(--text-2)}
+.ttime{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:right}
+.ttime .age{font-weight:500}
+.ttime .age.hot{color:var(--red)}
+
+.badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;display:inline-block;white-space:nowrap}
+.b-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.b-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.b-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.b-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.b-gray{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){background:#c83c12}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover:not(:disabled){background:#15803d}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--bg);border-color:var(--border)}
+.btn.danger{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+.btn.danger:hover{background:#fee2e2}
+
+/* MODAL */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:16px}
+#overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:940px;max-height:92vh;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden}
+.mhead{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:12px}
+.mtitle{font-weight:600;font-size:16px;letter-spacing:-.3px}
+.msub{font-size:12px;color:var(--text-2);margin-top:2px}
+.mbody{display:grid;grid-template-columns:1fr 268px;flex:1;overflow:hidden;min-height:0}
+.mmain{padding:22px;overflow-y:auto;border-right:1px solid var(--border)}
+.mside{padding:18px;overflow-y:auto;background:var(--bg)}
+.mfoot{padding:12px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface)}
+.xbtn{background:none;border:none;cursor:pointer;padding:4px 6px;color:var(--text-2);font-size:18px;line-height:1;border-radius:4px}
+.xbtn:hover{background:var(--bg);color:var(--text)}
+
+/* STEPS */
+.stepper{display:flex;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.stp{flex:1;padding:10px 8px;text-align:center;font-size:12px;font-weight:500;color:var(--text-3);background:var(--bg);border-right:1px solid var(--border);cursor:default;display:flex;flex-direction:column;align-items:center;gap:3px}
+.stp:last-child{border-right:none}
+.stp.done{background:var(--green-bg);color:var(--green)}
+.stp.now{background:var(--accent-bg);color:var(--accent)}
+.stp .sn{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:var(--border);color:var(--text-2)}
+.stp.done .sn{background:var(--green);color:#fff}
+.stp.now .sn{background:var(--accent);color:#fff}
+.stp .sl2{font-size:10px;font-weight:500;line-height:1.2}
+
+.panel{display:none}
+.panel.on{display:block}
+
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:76px;line-height:1.55}
+.fld.half{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld.half label{grid-column:1/-1}
+
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.opt{padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s}
+.opt:hover{border-color:var(--accent);background:var(--accent-bg)}
+.opt.picked{border-color:var(--accent);background:var(--accent-bg)}
+.opt-t{font-size:13px;font-weight:500;margin-bottom:2px}
+.opt.picked .opt-t{color:var(--accent)}
+.opt-d{font-size:12px;color:var(--text-2)}
+
+.msgbox{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:13px;line-height:1.6;color:var(--text)}
+.msglbl{font-size:11px;font-weight:500;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.abar{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap;align-items:center}
+
+.res-ok{background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius-lg);padding:16px 20px;display:none;align-items:center;gap:14px;margin-bottom:18px}
+.res-ok.show{display:flex}
+.res-icon{width:36px;height:36px;border-radius:50%;border:2px solid rgba(22,163,74,.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--green);color:#fff}
+.res-tt{font-weight:600;font-size:15px;color:var(--green)}
+.res-ss{font-size:12px;color:var(--text-2);margin-top:2px}
+
+.info-sec{margin-bottom:18px}
+.isec-t{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.irow{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.irow:last-child{border-bottom:none}
+.ik{color:var(--text-2)}
+.iv{font-weight:500;font-family:var(--mono);font-size:12px;text-align:right}
+
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.qa{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:500;color:var(--text);transition:all .15s;text-align:left;display:flex;align-items:center;gap:6px}
+.qa:hover{background:var(--bg);border-color:var(--border-strong)}
+.qa.fired{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+
+.loglist{display:flex;flex-direction:column}
+.li{padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.4}
+.li:last-child{border-bottom:none}
+.lt{font-family:var(--mono);font-size:10px;color:var(--text-3);display:block;margin-bottom:1px}
+
+.sla-big{font-size:22px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px}
+.sla-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.sla-f{height:100%;border-radius:3px;transition:width .8s,background .8s}
+
+/* FLEET */
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;padding:18px}
+.vc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .15s}
+.vc:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(232,75,26,.07)}
+.vcid{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-bottom:4px}
+.vcname{font-weight:600;font-size:14px;margin-bottom:2px}
+.vcplate{font-family:var(--mono);font-size:12px;color:var(--text-2);margin-bottom:10px}
+.vcrev{font-size:12px;color:var(--text-2);margin-top:8px}
+.vcrev span{font-weight:600;color:var(--green)}
+.vcutil{height:3px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+.vcutil-f{height:100%;border-radius:2px;background:var(--green)}
+
+/* METRICS */
+.met-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px;max-width:980px;margin:0 auto}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.mc-lbl{font-size:11px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.brow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12px}
+.blbl{width:76px;color:var(--text-2);flex-shrink:0;font-size:12px}
+.btrack{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.bfill{height:100%;border-radius:4px;background:var(--accent);transition:width .6s}
+.bval{width:38px;text-align:right;font-weight:500;font-family:var(--mono);font-size:11px;flex-shrink:0;color:var(--text)}
+.sla-row{margin-bottom:10px}
+.sla-rl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.sla-rl span{color:var(--text-2)}
+.sla-rl strong{font-weight:600}
+
+/* NOTIFICATION TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* NEW TICKET MODAL */
+#newOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;padding:16px}
+#newOverlay.open{display:flex}
+.newmodal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:500px;border:1px solid var(--border);overflow:hidden}
+.nm-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.nm-body{padding:20px}
+.nm-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--bg)}
+
+.divider{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand"><div class="nav-dot"></div>1Now Ops</div>
+  <button class="nav-link active" id="nl-dashboard" onclick="navTo('dashboard')">Dashboard</button>
+  <button class="nav-link" id="nl-fleet" onclick="navTo('fleet')">Fleet</button>
+  <button class="nav-link" id="nl-metrics" onclick="navTo('metrics')">Metrics</button>
+  <div class="nav-right">
+    <div class="live-pill"><div class="blink"></div>Live</div>
+    <span id="clk" style="font-family:var(--mono);font-size:12px;color:var(--text-2)"></span>
+  </div>
+</nav>
+
+<!-- RESOLUTION MODAL -->
+<div id="overlay" onclick="overlayClick(event)">
+ <div class="modal" id="theModal">
+  <div class="mhead">
+   <div>
+    <div class="mtitle" id="mTitle">Lockout Resolution — T-0041</div>
+    <div class="msub" id="mSub">Ahmed K. · Toyota Camry #CAM-07 · LAX Terminal 5 Parking</div>
+   </div>
+   <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+    <div style="text-align:right">
+     <div style="font-size:10px;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em">Elapsed</div>
+     <div class="sla-big" id="slaNum">00:00</div>
+    </div>
+    <button class="xbtn" onclick="closeModal()" aria-label="Close">✕</button>
+   </div>
+  </div>
+
+  <div id="resolvedBanner" class="res-ok" style="margin:14px 22px 0">
+   <div class="res-icon">✓</div>
+   <div><div class="res-tt">Case resolved</div><div class="res-ss" id="resSub">—</div></div>
+  </div>
+
+  <div class="mbody">
+   <!-- LEFT -->
+   <div class="mmain">
+
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+     <div class="stp done" id="st1"><div class="sn">✓</div><div class="sl2">Verify</div></div>
+     <div class="stp now" id="st2"><div class="sn">2</div><div class="sl2">Diagnose</div></div>
+     <div class="stp" id="st3"><div class="sn">3</div><div class="sl2">Resolve</div></div>
+     <div class="stp" id="st4"><div class="sn">4</div><div class="sl2">Notify</div></div>
+     <div class="stp" id="st5"><div class="sn">5</div><div class="sl2">Close</div></div>
+    </div>
+
+    <!-- Panel 2 -->
+    <div class="panel on" id="p2">
+     <div style="font-weight:600;font-size:15px;margin-bottom:3px">What caused the lockout?</div>
+     <div style="font-size:13px;color:var(--text-2);margin-bottom:16px">Pick the option that matches what the renter described.</div>
+     <div class="opts" id="causeOpts">
+      <div class="opt" onclick="pickOpt(this,'keys-inside','Keys locked inside','Dispatch locksmith — standard unlock, no damage')">
+       <div class="opt-t">Keys inside vehicle</div>
+       <div class="opt-d">Renter locked keys inside the car</div>
+      </div>
+      <div class="opt" onclick="pickOpt(this,'app-fail','App unlock failure','Remote override via telematics, or dispatch key runner')">
+       <div class="opt-t">App / digital key failure</div>
+       <div class="opt-d">Smart lock or keyless entry not working</div>
+      </div>
+      <div class="opt" onclick="pickOpt(this,'no-key','Key not received at handoff','Dispatch spare key from operator or nearest runner')">
+       <div class="opt-t">Key never received</div>
+       <div class="opt-d">Key not in lockbox, handoff failed</div>
+      </div>
+      <div class="opt" onclick="pickOpt(this,'fob-dead','Key fob battery dead','Walk renter through physical override inside fob first')">
+       <div class="opt-t">Key fob battery dead</div>
+       <div class="opt-d">Fob unresponsive, car won't unlock</div>
+      </div>
+     </div>
+     <div class="abar">
+      <button class="btn primary" onclick="gp(3)">Confirm cause →</button>
+     </div>
+    </div>
+
+    <!-- Panel 3 -->
+    <div class="panel" id="p3">
+     <div style="font-weight:600;font-size:15px;margin-bottom:3px">Choose resolution action</div>
+     <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">Recommended action based on the cause you selected.</div>
+     <div id="resRec" style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:3px" id="recTitle">—</div>
+      <div style="font-size:12px;color:var(--text-2)" id="recDesc">—</div>
+     </div>
+     <div class="fld">
+      <label>Who did you contact / dispatch?</label>
+      <input id="dispatchWho" type="text" placeholder="e.g. NationWide Locksmith — (310) 555-0192">
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fld">
+       <label>ETA to renter (minutes)</label>
+       <input id="etaMins" type="number" min="1" max="120" placeholder="e.g. 25">
+      </div>
+      <div class="fld">
+       <label>Estimated cost</label>
+       <input id="dispCost" type="text" placeholder="e.g. $65 (waived)">
+      </div>
+     </div>
+     <div class="abar">
+      <button class="btn primary" onclick="gp(4)">Action taken →</button>
+      <button class="btn ghost sm" onclick="gp(2)">← Back</button>
+     </div>
+    </div>
+
+    <!-- Panel 4 -->
+    <div class="panel" id="p4">
+     <div style="font-weight:600;font-size:15px;margin-bottom:3px">Notify renter & operator</div>
+     <div style="font-size:13px;color:var(--text-2);margin-bottom:16px">Review and send both messages. Edit if needed before sending.</div>
+
+     <div class="msglbl">Message to renter (SMS)</div>
+     <textarea id="rMsg" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px;line-height:1.6;resize:vertical;min-height:96px;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+     <div class="abar" style="margin-bottom:18px">
+      <button class="btn primary" id="smsBtnR" onclick="sendSMS()">Send SMS to renter</button>
+      <button class="btn sm" onclick="copyText('rMsg')">Copy text</button>
+     </div>
+
+     <div class="divider"></div>
+
+     <div class="msglbl">Operator alert</div>
+     <div class="msgbox" id="opMsg">—</div>
+     <div class="abar">
+      <button class="btn sm" id="opBtn" onclick="notifyOp()">Notify operator</button>
+     </div>
+
+     <div class="abar" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn primary" onclick="gp(5)">Continue to close →</button>
+      <button class="btn ghost sm" onclick="gp(3)">← Back</button>
+     </div>
+    </div>
+
+    <!-- Panel 5 -->
+    <div class="panel" id="p5">
+     <div style="font-weight:600;font-size:15px;margin-bottom:3px">Confirm access & close case</div>
+     <div style="font-size:13px;color:var(--text-2);margin-bottom:16px">Confirm the renter has access, fill in what happened, then file the report.</div>
+     <div class="fld">
+      <label>Did renter confirm vehicle access?</label>
+      <select id="accessConf">
+       <option value="">— Select —</option>
+       <option value="yes">Yes — renter confirmed access restored</option>
+       <option value="no">No — still unresolved, will escalate</option>
+      </select>
+     </div>
+     <div class="fld">
+      <label>Resolution notes</label>
+      <textarea id="resNotes" placeholder="e.g. Locksmith arrived 12:14 AM. Keys retrieved from driver seat. No vehicle damage."></textarea>
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fld">
+       <label>Compensation issued</label>
+       <select id="comp">
+        <option>None</option>
+        <option>$15 courtesy credit</option>
+        <option>$30 inconvenience credit</option>
+        <option>1-day rate refund</option>
+        <option>Full trip refund</option>
+       </select>
+      </div>
+      <div class="fld">
+       <label>Internal severity</label>
+       <select id="sev">
+        <option>Low — resolved smoothly</option>
+        <option>Medium — minor delay</option>
+        <option>High — significant disruption</option>
+        <option>Critical — escalated</option>
+       </select>
+      </div>
+     </div>
+     <div class="abar">
+      <button class="btn green" onclick="closeCase()">✓ Close case & file report</button>
+      <button class="btn danger sm" onclick="escalate()">Escalate</button>
+      <button class="btn ghost sm" onclick="gp(4)">← Back</button>
+     </div>
+    </div>
+
+   </div>
+
+   <!-- SIDEBAR -->
+   <div class="mside">
+
+    <div class="info-sec">
+     <div class="isec-t">SLA</div>
+     <div class="sla-big" id="slaNum2" style="color:var(--amber)">00:00</div>
+     <div style="font-size:11px;color:var(--text-3);margin-top:1px">Target: 15 min response</div>
+     <div class="sla-track"><div class="sla-f" id="slaFill" style="width:0%;background:var(--green)"></div></div>
+    </div>
+
+    <div class="info-sec">
+     <div class="isec-t">Rental</div>
+     <div class="irow"><span class="ik">Vehicle</span><span class="iv">Toyota Camry</span></div>
+     <div class="irow"><span class="ik">Unit</span><span class="iv">CAM-07</span></div>
+     <div class="irow"><span class="ik">Location</span><span class="iv">LAX T5 P2</span></div>
+     <div class="irow"><span class="ik">Check-in</span><span class="iv">May 14</span></div>
+     <div class="irow"><span class="ik">Check-out</span><span class="iv">May 17</span></div>
+     <div class="irow"><span class="ik">Rate</span><span class="iv">$89/day</span></div>
+    </div>
+
+    <div class="info-sec">
+     <div class="isec-t">Renter</div>
+     <div class="irow"><span class="ik">Name</span><span class="iv">Ahmed K.</span></div>
+     <div class="irow"><span class="ik">Phone</span><span class="iv">····4821</span></div>
+     <div class="irow"><span class="ik">Rating</span><span class="iv">⭐ 4.9</span></div>
+     <div class="irow"><span class="ik">Trips</span><span class="iv">8</span></div>
+     <div class="irow"><span class="ik">Incidents</span><span class="iv" style="color:var(--green)">None</span></div>
+    </div>
+
+    <div class="info-sec">
+     <div class="isec-t">Quick actions</div>
+     <div class="qa-grid">
+      <button class="qa" id="qa-lock" onclick="fireQA('qa-lock','Locksmith dispatched')">🔑 Locksmith</button>
+      <button class="qa" id="qa-road" onclick="fireQA('qa-road','Roadside dispatched')">🔧 Roadside</button>
+      <button class="qa" id="qa-tow" onclick="fireQA('qa-tow','Tow truck requested')">🚗 Tow</button>
+      <button class="qa" id="qa-cred" onclick="fireQA('qa-cred','Courtesy credit issued')">💳 Credit</button>
+      <button class="qa" id="qa-esc" onclick="fireQA('qa-esc','Senior agent notified')">👤 Escalate</button>
+      <button class="qa" id="qa-pic" onclick="fireQA('qa-pic','Photos requested from renter')">📷 Photos</button>
+     </div>
+    </div>
+
+    <div class="info-sec">
+     <div class="isec-t" style="display:flex;justify-content:space-between;align-items:center">
+      Incident log <span id="logCnt" style="font-weight:400;font-family:var(--mono);font-size:10px;color:var(--text-3)">3 entries</span>
+     </div>
+     <div class="loglist" id="thelog">
+      <div class="li"><span class="lt">11:47 PM</span>Ticket opened — renter initiated lockout</div>
+      <div class="li"><span class="lt">11:48 PM</span>Identity verified via booking ID + phone</div>
+      <div class="li"><span class="lt">11:48 PM</span>Case assigned to support</div>
+     </div>
+    </div>
+
+   </div>
+  </div>
+
+  <div class="mfoot">
+   <div style="font-size:12px;color:var(--text-2)" id="mfoot">Step 2 of 5 — Diagnosing cause</div>
+   <div style="font-size:12px;color:var(--text-2);font-family:var(--mono)">T-0041 · Critical</div>
+  </div>
+ </div>
+</div>
+
+<!-- NEW TICKET MODAL -->
+<div id="newOverlay" onclick="newOverlayClick(event)">
+ <div class="newmodal">
+  <div class="nm-head">
+   <div style="font-weight:600;font-size:15px">New incident</div>
+   <button class="xbtn" onclick="closeNew()">✕</button>
+  </div>
+  <div class="nm-body">
+   <div class="fld">
+    <label>Renter name</label>
+    <input id="ni-renter" type="text" placeholder="Full name">
+   </div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="fld">
+     <label>Vehicle</label>
+     <select id="ni-veh">
+      <option>Toyota Camry — CAM-07</option>
+      <option>Tesla Model 3 — TES-02</option>
+      <option>Honda CR-V — CRV-11</option>
+      <option>BMW 3 Series — BMW-04</option>
+      <option>Toyota RAV4 — RAV-09</option>
+      <option>Honda Civic — CIV-06</option>
+     </select>
+    </div>
+    <div class="fld">
+     <label>Incident type</label>
+     <select id="ni-type">
+      <option>Lockout</option>
+      <option>Access issue</option>
+      <option>Damage claim</option>
+      <option>Billing dispute</option>
+      <option>Late return</option>
+      <option>Other</option>
+     </select>
+    </div>
+   </div>
+   <div class="fld">
+    <label>Issue description</label>
+    <textarea id="ni-desc" placeholder="Brief description of the problem..."></textarea>
+   </div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="fld">
+     <label>Renter phone (last 4)</label>
+     <input id="ni-phone" type="text" placeholder="e.g. 4821" maxlength="4">
+    </div>
+    <div class="fld">
+     <label>Priority</label>
+     <select id="ni-pri">
+      <option>Critical</option>
+      <option>High</option>
+      <option>Normal</option>
+      <option>Low</option>
+     </select>
+    </div>
+   </div>
+  </div>
+  <div class="nm-foot">
+   <button class="btn ghost" onclick="closeNew()">Cancel</button>
+   <button class="btn primary" onclick="createTicket()">Create ticket</button>
+  </div>
+ </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+ <div class="wrap">
+  <div class="ph">
+   <div><div class="pt">Support dashboard</div><div class="ps" id="dashSub">Thursday, May 21 2026 · 3 active incidents</div></div>
+   <button class="btn primary" onclick="openNew()">+ New incident</button>
+  </div>
+  <div class="stats">
+   <div class="sc red"><div class="sl">Critical open</div><div class="sv">1</div><div class="ss">T-0041 · lockout at LAX</div></div>
+   <div class="sc amber"><div class="sl">Active cases</div><div class="sv" id="activeCount">3</div><div class="ss">2 pending response</div></div>
+   <div class="sc green"><div class="sl">Resolved today</div><div class="sv" id="resolvedCount">12</div><div class="ss">avg 8.4 min to close</div></div>
+   <div class="sc blue"><div class="sl">Fleet active</div><div class="sv">34</div><div class="ss">of 40 vehicles out</div></div>
+  </div>
+
+  <div class="card">
+   <div class="card-head">
+    <div class="card-title">Active incidents</div>
+    <div style="display:flex;gap:7px">
+     <button class="btn sm ghost" onclick="filterTickets('all',this)" id="fAll" style="border-color:var(--accent);color:var(--accent)">All</button>
+     <button class="btn sm ghost" onclick="filterTickets('Lockout',this)">Lockout</button>
+     <button class="btn sm ghost" onclick="filterTickets('Dispute',this)">Dispute</button>
+     <button class="btn sm ghost" onclick="filterTickets('Access',this)">Access</button>
+    </div>
+   </div>
+   <div class="th tickets-grid">
+    <span class="thl">Ticket</span><span class="thl">Renter / issue</span><span class="thl">Vehicle</span><span class="thl">Type</span><span class="thl">Status</span><span class="thl" style="text-align:right">Time</span>
+   </div>
+   <div id="ticketBody">
+    <div class="tr tickets-grid hi" data-type="Lockout" onclick="openModal()">
+     <span class="tid">T-0041</span>
+     <div><div class="trenter">Ahmed K.</div><div class="tissue">Locked out — LAX Terminal 5 Parking, Level 2</div></div>
+     <div><div style="font-size:13px;font-weight:500">Toyota Camry</div><div class="tveh">CAM-07</div></div>
+     <span class="badge b-red">Lockout</span>
+     <span class="badge b-amber">In progress</span>
+     <div class="ttime"><div>11:47 PM</div><div class="age hot">8m ago</div></div>
+    </div>
+    <div class="tr tickets-grid" data-type="Access" onclick="toast('T-0039: App unlock — Tesla Model 3. Click T-0041 to see the full resolution flow.')">
+     <span class="tid">T-0039</span>
+     <div><div class="trenter">Farida S.</div><div class="tissue">App not opening trunk — rental starts in 20 min</div></div>
+     <div><div style="font-size:13px;font-weight:500">Tesla Model 3</div><div class="tveh">TES-02</div></div>
+     <span class="badge b-amber">Access</span>
+     <span class="badge b-blue">Waiting</span>
+     <div class="ttime"><div>10:22 PM</div><div class="age">1h 25m</div></div>
+    </div>
+    <div class="tr tickets-grid" data-type="Dispute" onclick="toast('T-0036: Damage dispute — Honda CR-V. Click T-0041 to see the full resolution flow.')">
+     <span class="tid">T-0036</span>
+     <div><div class="trenter">Hamza M.</div><div class="tissue">Damage claim dispute — no pickup photos, wants refund</div></div>
+     <div><div style="font-size:13px;font-weight:500">Honda CR-V</div><div class="tveh">CRV-11</div></div>
+     <span class="badge b-red">Dispute</span>
+     <span class="badge b-blue">Waiting</span>
+     <div class="ttime"><div>09:05 PM</div><div class="age">3h 3m</div></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="card">
+   <div class="card-head"><div class="card-title">Resolved today</div><button class="btn sm ghost">View all →</button></div>
+   <div class="th tickets-grid">
+    <span class="thl">Ticket</span><span class="thl">Renter / issue</span><span class="thl">Vehicle</span><span class="thl">Type</span><span class="thl">Resolved</span><span class="thl" style="text-align:right">Time to close</span>
+   </div>
+   <div id="resolvedBody">
+    <div class="tr tickets-grid">
+     <span class="tid">T-0035</span>
+     <div><div class="trenter">Layla A.</div><div class="tissue">Late return — extended 2 hrs, billing updated</div></div>
+     <div><div style="font-size:13px;font-weight:500">BMW 3 Series</div><div class="tveh">BMW-04</div></div>
+     <span class="badge b-gray">Billing</span>
+     <span class="badge b-green">Resolved</span>
+     <div class="ttime"><div>7:41 PM</div><div class="age" style="color:var(--green)">4m 12s</div></div>
+    </div>
+    <div class="tr tickets-grid">
+     <span class="tid">T-0034</span>
+     <div><div class="trenter">Bilal R.</div><div class="tissue">Pickup location wrong — corrected, renter directed</div></div>
+     <div><div style="font-size:13px;font-weight:500">Toyota RAV4</div><div class="tveh">RAV-09</div></div>
+     <span class="badge b-gray">Info</span>
+     <span class="badge b-green">Resolved</span>
+     <div class="ttime"><div>6:15 PM</div><div class="age" style="color:var(--green)">2m 08s</div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- FLEET PAGE -->
+<div class="page" id="page-fleet">
+ <div class="wrap">
+  <div class="ph">
+   <div><div class="pt">Fleet overview</div><div class="ps">40 vehicles · 34 active rentals · 6 available</div></div>
+   <div style="display:flex;gap:8px">
+    <button class="btn ghost sm">All status</button>
+    <button class="btn sm" onclick="toast('Add vehicle form coming — would connect to booking API')">+ Add vehicle</button>
+   </div>
+  </div>
+  <div class="stats">
+   <div class="sc green"><div class="sl">On rent</div><div class="sv">34</div><div class="ss">85% utilization</div></div>
+   <div class="sc blue"><div class="sl">Available</div><div class="sv">6</div><div class="ss">ready to book</div></div>
+   <div class="sc amber"><div class="sl">Needs service</div><div class="sv">2</div><div class="ss">oil change due</div></div>
+   <div class="sc red"><div class="sl">Incident</div><div class="sv">1</div><div class="ss">CAM-07 — lockout</div></div>
+  </div>
+  <div class="card">
+   <div class="card-head"><div class="card-title">Vehicles</div><span style="font-size:12px;color:var(--text-2)">Click any vehicle to view or open an incident</span></div>
+   <div class="fleet-grid">
+    <div class="vc" onclick="openModal()">
+     <div class="vcid">CAM-07</div><div class="vcname">Toyota Camry</div><div class="vcplate">6TRF882</div>
+     <div><span class="badge b-red">Incident</span></div>
+     <div class="vcrev">May: <span>$1,247</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:88%;background:var(--red)"></div></div>
+    </div>
+    <div class="vc" onclick="toast('TES-02: Access issue active — T-0039')">
+     <div class="vcid">TES-02</div><div class="vcname">Tesla Model 3</div><div class="vcplate">8XPL441</div>
+     <div><span class="badge b-amber">Access issue</span></div>
+     <div class="vcrev">May: <span>$2,310</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:92%;background:var(--amber)"></div></div>
+    </div>
+    <div class="vc" onclick="toast('CRV-11: Damage dispute active — T-0036')">
+     <div class="vcid">CRV-11</div><div class="vcname">Honda CR-V</div><div class="vcplate">3MKS229</div>
+     <div><span class="badge b-amber">Dispute</span></div>
+     <div class="vcrev">May: <span>$890</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:65%"></div></div>
+    </div>
+    <div class="vc" onclick="toast('BMW-04: On rent · No issues · Returns May 23')">
+     <div class="vcid">BMW-04</div><div class="vcname">BMW 3 Series</div><div class="vcplate">2ZBQ774</div>
+     <div><span class="badge b-green">On rent</span></div>
+     <div class="vcrev">May: <span>$3,120</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:95%"></div></div>
+    </div>
+    <div class="vc" onclick="toast('RAV-09: On rent · No issues · Returns May 22')">
+     <div class="vcid">RAV-09</div><div class="vcname">Toyota RAV4</div><div class="vcplate">7YNT553</div>
+     <div><span class="badge b-green">On rent</span></div>
+     <div class="vcrev">May: <span>$1,680</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:78%"></div></div>
+    </div>
+    <div class="vc" onclick="toast('CIV-06: Available now · Last returned May 19')">
+     <div class="vcid">CIV-06</div><div class="vcname">Honda Civic</div><div class="vcplate">4WRD661</div>
+     <div><span class="badge b-blue">Available</span></div>
+     <div class="vcrev">May: <span>$940</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:55%"></div></div>
+    </div>
+    <div class="vc" onclick="toast('F15-03: Available now · Last returned May 20')">
+     <div class="vcid">F15-03</div><div class="vcname">Ford F-150</div><div class="vcplate">1QBZ119</div>
+     <div><span class="badge b-blue">Available</span></div>
+     <div class="vcrev">May: <span>$1,430</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:60%"></div></div>
+    </div>
+    <div class="vc" onclick="toast('CHE-08: Service due — oil change at 3,200 miles overdue')">
+     <div class="vcid">CHE-08</div><div class="vcname">Chevy Tahoe</div><div class="vcplate">9TML338</div>
+     <div><span class="badge b-gray">Service due</span></div>
+     <div class="vcrev">May: <span>$2,050</span></div>
+     <div class="vcutil"><div class="vcutil-f" style="width:72%;background:var(--amber)"></div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- METRICS PAGE -->
+<div class="page" id="page-metrics">
+ <div class="wrap">
+  <div class="ph">
+   <div><div class="pt">Operator metrics</div><div class="ps">May 2026 · 40-vehicle fleet · Updated live</div></div>
+  </div>
+  <div class="stats">
+   <div class="sc green"><div class="sl">Monthly revenue</div><div class="sv">$38,420</div><div class="ss">+14% vs April</div></div>
+   <div class="sc green"><div class="sl">Utilization</div><div class="sv">85%</div><div class="ss">fleet avg this month</div></div>
+   <div class="sc blue"><div class="sl">Avg resolution</div><div class="sv">8.4m</div><div class="ss">per incident</div></div>
+   <div class="sc green"><div class="sl">Renter rating</div><div class="sv">4.87</div><div class="ss">from 143 reviews</div></div>
+  </div>
+  <div class="met-grid">
+   <div class="mc">
+    <div class="mc-lbl">Revenue by vehicle class</div>
+    <div class="brow"><span class="blbl">Luxury</span><div class="btrack"><div class="bfill" style="width:84%"></div></div><span class="bval">$12.4k</span></div>
+    <div class="brow"><span class="blbl">SUV</span><div class="btrack"><div class="bfill" style="width:72%"></div></div><span class="bval">$10.5k</span></div>
+    <div class="brow"><span class="blbl">Sedan</span><div class="btrack"><div class="bfill" style="width:60%"></div></div><span class="bval">$8.7k</span></div>
+    <div class="brow"><span class="blbl">Compact</span><div class="btrack"><div class="bfill" style="width:46%"></div></div><span class="bval">$6.8k</span></div>
+   </div>
+   <div class="mc">
+    <div class="mc-lbl">Incidents by type (May)</div>
+    <div class="brow"><span class="blbl">Lockout</span><div class="btrack"><div class="bfill" style="width:64%;background:var(--red)"></div></div><span class="bval">8</span></div>
+    <div class="brow"><span class="blbl">Access</span><div class="btrack"><div class="bfill" style="width:40%;background:var(--red)"></div></div><span class="bval">5</span></div>
+    <div class="brow"><span class="blbl">Damage</span><div class="btrack"><div class="bfill" style="width:32%;background:var(--red)"></div></div><span class="bval">4</span></div>
+    <div class="brow"><span class="blbl">Billing</span><div class="btrack"><div class="bfill" style="width:24%;background:var(--red)"></div></div><span class="bval">3</span></div>
+    <div class="brow"><span class="blbl">Other</span><div class="btrack"><div class="bfill" style="width:16%;background:var(--red)"></div></div><span class="bval">2</span></div>
+   </div>
+   <div class="mc">
+    <div class="mc-lbl">Direct vs marketplace</div>
+    <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:12px">
+     <div style="width:62%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff">62% Direct</div>
+     <div style="width:38%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-2)">38% Turo</div>
+    </div>
+    <div style="font-size:13px;color:var(--text-2);line-height:1.5">Direct saves ~15% in platform fees. At this volume that's <strong style="color:var(--green)">~$5,760 extra/month</strong>.</div>
+    <div class="divider"></div>
+    <div class="mc-lbl">Days to first booking (new operators)</div>
+    <div style="font-size:34px;font-weight:600;letter-spacing:-1px">4.2 <span style="font-size:16px;font-weight:400;color:var(--text-2)">days</span></div>
+    <div style="font-size:12px;color:var(--green);margin-top:3px">↓ 1.8 days vs last quarter</div>
+   </div>
+   <div class="mc">
+    <div class="mc-lbl">SLA compliance</div>
+    <div class="sla-row">
+     <div class="sla-rl"><span>Critical — under 15 min</span><strong style="color:var(--green)">91%</strong></div>
+     <div class="sla-track"><div class="sla-f" style="width:91%;background:var(--green)"></div></div>
+    </div>
+    <div class="sla-row">
+     <div class="sla-rl"><span>Standard — under 2 hrs</span><strong style="color:var(--green)">97%</strong></div>
+     <div class="sla-track"><div class="sla-f" style="width:97%;background:var(--green)"></div></div>
+    </div>
+    <div class="sla-row">
+     <div class="sla-rl"><span>First-contact resolution</span><strong style="color:var(--blue)">74%</strong></div>
+     <div class="sla-track"><div class="sla-f" style="width:74%;background:var(--blue)"></div></div>
+    </div>
+    <div class="sla-row" style="margin-bottom:0">
+     <div class="sla-rl"><span>Escalation rate</span><strong style="color:var(--amber)">9%</strong></div>
+     <div class="sla-track"><div class="sla-f" style="width:9%;background:var(--amber)"></div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<script>
+// ── NAV ──────────────────────────────────────────────────────────────────────
+function navTo(name) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nl-' + name).classList.add('active');
+}
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function tick(){
+  var n = new Date();
+  document.getElementById('clk').textContent = n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+tick(); setInterval(tick, 15000);
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+var toastTimer;
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
+}
+
+// ── FILTER TICKETS ───────────────────────────────────────────────────────────
+function filterTickets(type, btn){
+  document.querySelectorAll('.card-head .btn').forEach(function(b){
+    b.style.borderColor = ''; b.style.color = '';
+  });
+  btn.style.borderColor = 'var(--accent)'; btn.style.color = 'var(--accent)';
+  var rows = document.querySelectorAll('#ticketBody .tr');
+  rows.forEach(function(r){
+    r.style.display = (type === 'all' || r.getAttribute('data-type') === type) ? '' : 'none';
+  });
+}
+
+// ── MODAL STATE ──────────────────────────────────────────────────────────────
+var elapsed = 0;
+var slaInt = null;
+var curStep = 2;
+var cause = null, causeLabel = '', causeAction = '';
+var smsDone = false, opDone = false;
+
+function openModal(){
+  document.getElementById('overlay').classList.add('open');
+  elapsed = 0;
+  clearInterval(slaInt);
+  slaInt = setInterval(function(){
+    elapsed++;
+    var m = String(Math.floor(elapsed/60)).padStart(2,'0');
+    var s = String(elapsed%60).padStart(2,'0');
+    var str = m+':'+s;
+    document.getElementById('slaNum').textContent = str;
+    document.getElementById('slaNum2').textContent = str;
+    var pct = Math.min(elapsed/900*100, 100);
+    var fill = document.getElementById('slaFill');
+    fill.style.width = Math.round(pct) + '%';
+    var col = pct > 80 ? 'var(--red)' : pct > 55 ? 'var(--amber)' : 'var(--green)';
+    fill.style.background = col;
+    document.getElementById('slaNum').style.color = col;
+    document.getElementById('slaNum2').style.color = col;
+  }, 1000);
+  setStep(2);
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+  clearInterval(slaInt);
+}
+
+function overlayClick(e){
+  if(e.target === document.getElementById('overlay')) closeModal();
+}
+
+// ── STEP ENGINE ──────────────────────────────────────────────────────────────
+function gp(n){
+  if(n === 3 && !cause){ toast('Please select a cause before continuing.'); return; }
+  if(n === 4){
+    var who = document.getElementById('dispatchWho').value.trim();
+    var eta = document.getElementById('etaMins').value.trim();
+    if(!who){ document.getElementById('dispatchWho').focus(); toast('Enter who you contacted or dispatched.'); return; }
+    var etaStr = eta ? 'Help is on the way — estimated arrival in about ' + eta + ' minutes.' : 'Help is on the way.';
+    document.getElementById('rMsg').value = 'Hi Ahmed, this is 1Now support. I can see you\'re locked out of your Toyota Camry at LAX Terminal 5 — I\'m on it. ' + etaStr + ' Stay with the vehicle. I\'ll keep you updated. Sorry for the trouble.';
+    document.getElementById('opMsg').textContent = '⚠ Incident T-0041 — CAM-07 lockout at LAX T5. Renter: Ahmed K. Cause: ' + causeLabel + '. Action: ' + who + (eta ? '. ETA ' + eta + ' min.' : '.') + ' No damage reported. Monitoring.';
+    smsDone = false; opDone = false;
+    var sb = document.getElementById('smsBtnR');
+    sb.textContent = 'Send SMS to renter'; sb.disabled = false;
+    sb.className = 'btn primary';
+    var ob = document.getElementById('opBtn');
+    ob.textContent = 'Notify operator'; ob.disabled = false;
+    ob.className = 'btn sm';
+    addLog('Dispatch confirmed: ' + who + (eta ? ' (ETA '+eta+'m)' : ''));
+  }
+  setStep(n);
+}
+
+function setStep(n){
+  curStep = n;
+  for(var i=2;i<=5;i++){
+    document.getElementById('p'+i).className = 'panel' + (i===n?' on':'');
+    var s = document.getElementById('st'+i);
+    s.className = 'stp' + (i<n?' done':i===n?' now':'');
+    s.querySelector('.sn').textContent = i < n ? '✓' : String(i);
+  }
+  var labels = {2:'Step 2 of 5 — Diagnosing cause',3:'Step 3 of 5 — Choosing resolution',4:'Step 4 of 5 — Notify renter & operator',5:'Step 5 of 5 — Confirm & close'};
+  document.getElementById('mfoot').textContent = labels[n] || '';
+}
+
+// ── CAUSE PICKER ─────────────────────────────────────────────────────────────
+function pickOpt(el, val, lbl, act){
+  document.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('picked'); });
+  el.classList.add('picked');
+  cause = val; causeLabel = lbl; causeAction = act;
+}
+
+// ── QUICK ACTIONS ─────────────────────────────────────────────────────────────
+function fireQA(id, msg){
+  var el = document.getElementById(id);
+  el.classList.add('fired');
+  el.disabled = true;
+  addLog(msg);
+  toast(msg + ' ✓');
+}
+
+// ── STEP 3 render ─────────────────────────────────────────────────────────────
+document.getElementById('p3'); // ensure exists
+var _origGp = gp;
+gp = function(n){
+  if(n === 3 && cause){
+    document.getElementById('recTitle').textContent = causeLabel;
+    document.getElementById('recDesc').textContent = 'Recommended: ' + causeAction + '. Document below.';
+    addLog('Cause confirmed: ' + causeLabel);
+  }
+  _origGp(n);
+};
+
+// ── SMS & OPERATOR ───────────────────────────────────────────────────────────
+function sendSMS(){
+  smsDone = true;
+  var btn = document.getElementById('smsBtnR');
+  btn.textContent = '✓ SMS sent';
+  btn.className = 'btn green';
+  btn.disabled = true;
+  addLog('SMS sent to renter Ahmed K.');
+  toast('SMS sent to Ahmed K. ✓');
+}
+
+function notifyOp(){
+  opDone = true;
+  var btn = document.getElementById('opBtn');
+  btn.textContent = '✓ Operator notified';
+  btn.className = 'btn green sm';
+  btn.disabled = true;
+  addLog('Operator notified via platform alert');
+  toast('Operator notified ✓');
+}
+
+function copyText(id){
+  var el = document.getElementById(id);
+  var txt = el.value || el.textContent;
+  navigator.clipboard.writeText(txt.trim()).then(function(){
+    toast('Copied to clipboard ✓');
+  });
+}
+
+// ── CLOSE CASE ───────────────────────────────────────────────────────────────
+function closeCase(){
+  var acc = document.getElementById('accessConf').value;
+  if(!acc){ toast('Please confirm whether the renter has vehicle access.'); return; }
+  clearInterval(slaInt);
+  var m = Math.floor(elapsed/60), s = elapsed%60;
+  var comp = document.getElementById('comp').value;
+  var notes = document.getElementById('resNotes').value.trim();
+  addLog('Case closed — access ' + (acc==='yes'?'restored ✓':'escalated'));
+  addLog('Compensation: ' + comp);
+  if(notes) addLog('Notes: ' + notes.slice(0,55) + (notes.length>55?'…':''));
+  document.getElementById('resSub').textContent = 'Renter notified · Operator alerted · Total time: ' + m + 'm ' + s + 's · ' + comp;
+  document.getElementById('resolvedBanner').classList.add('show');
+  document.getElementById('st5').className = 'stp done';
+  document.getElementById('st5').querySelector('.sn').textContent = '✓';
+  document.getElementById('mfoot').textContent = 'Case closed — all steps complete';
+  var c = document.querySelector('[onclick="closeCase()"]');
+  if(c){ c.textContent='✓ Closed'; c.disabled=true; }
+  var rc = parseInt(document.getElementById('resolvedCount').textContent);
+  document.getElementById('resolvedCount').textContent = rc + 1;
+  var ac = parseInt(document.getElementById('activeCount').textContent);
+  if(ac > 0) document.getElementById('activeCount').textContent = ac - 1;
+  toast('Case T-0041 closed and filed ✓');
+}
+
+function escalate(){
+  addLog('⚠ Escalated to senior support');
+  toast('Escalated to senior support — they have been notified');
+}
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+function addLog(msg){
+  var log = document.getElementById('thelog');
+  var n = new Date();
+  var t = n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  var d = document.createElement('div');
+  d.className = 'li';
+  d.innerHTML = '<span class="lt">'+t+'</span>'+msg;
+  log.appendChild(d);
+  var cnt = log.querySelectorAll('.li').length;
+  document.getElementById('logCnt').textContent = cnt + ' entr' + (cnt===1?'y':'ies');
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── NEW TICKET ────────────────────────────────────────────────────────────────
+function openNew(){ document.getElementById('newOverlay').classList.add('open'); }
+function closeNew(){ document.getElementById('newOverlay').classList.remove('open'); }
+function newOverlayClick(e){ if(e.target===document.getElementById('newOverlay')) closeNew(); }
+
+function createTicket(){
+  var renter = document.getElementById('ni-renter').value.trim();
+  var type = document.getElementById('ni-type').value;
+  var desc = document.getElementById('ni-desc').value.trim();
+  if(!renter || !desc){ toast('Please fill in renter name and issue description.'); return; }
+  var id = 'T-0' + (Math.floor(Math.random()*900)+100);
+  var veh = document.getElementById('ni-veh').value;
+  var pri = document.getElementById('ni-pri').value;
+  var body = document.getElementById('ticketBody');
+  var row = document.createElement('div');
+  row.className = 'tr tickets-grid';
+  row.setAttribute('data-type', type);
+  var badgeCls = pri==='Critical'?'b-red':pri==='High'?'b-amber':'b-gray';
+  row.innerHTML =
+    '<span class="tid">'+id+'</span>'+
+    '<div><div class="trenter">'+renter+'</div><div class="tissue">'+desc+'</div></div>'+
+    '<div><div style="font-size:13px;font-weight:500">'+veh.split(' — ')[0]+'</div><div class="tveh">'+veh.split(' — ')[1]+'</div></div>'+
+    '<span class="badge b-blue">'+type+'</span>'+
+    '<span class="badge b-amber">New</span>'+
+    '<div class="ttime"><div>Now</div><div class="age hot">just now</div></div>';
+  row.onclick = function(){ toast(id+' created — full resolution flow available on T-0041'); };
+  body.insertBefore(row, body.firstChild);
+  var ac = parseInt(document.getElementById('activeCount').textContent);
+  document.getElementById('activeCount').textContent = ac + 1;
+  closeNew();
+  toast('Ticket '+id+' created for '+renter+' ✓');
+  document.getElementById('ni-renter').value='';
+  document.getElementById('ni-desc').value='';
+}
+</script>
+</body>
+</html>
